@@ -1,0 +1,3 @@
+rootProject.name = 'HealthyMind'
+
+include ':app'
