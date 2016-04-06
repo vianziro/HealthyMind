@@ -26,37 +26,40 @@ class HealthyMind extends Component {
         </View>
         <View style={styles.conversation}>
           <View style={styles.appsays}>
-            <Text>
+            <Text style={styles.appsays_text}>
               I hope you are having a great evening.
               Are evenings generally a good time to meditate?
             </Text>
           </View>
           <View style={styles.usersays}>
-            <Text>
+            <Text style={styles.usersays_text}>
               Yes
             </Text>
           </View>
           <View style={styles.appsays}>
-            <Text>
+            <Text style={styles.appsays_text}>
               Great! Before we begin,
-              how connected did you feel to people around you today?
+              How connected did you feel to people around you today?
             </Text>
           </View>
         </View>
         <View style={styles.controls}>
-          <SliderIOS style={styles.slider} />
+          <SliderIOS style={styles.slider}
+            minimumTrackTintColor={'white'}
+            maximumTrackTintColor={'white'}
+          />
           <View style={styles.spectrum}>
             <Text style={styles.spectrum_min}>Not Connected at all</Text>
             <Text style={styles.spectrum_max}>Very Connected</Text>
           </View>
           <TouchableOpacity>
-            <View style={styles.button}>
-              <Text>SUBMIT</Text>
+            <View style={[styles.button, styles.submitButton]}>
+              <Text style={styles.submitButtonText}>SUBMIT</Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity>
-            <View style={styles.button}>
-              <Text>I WAS ALONE TODAY</Text>
+            <View style={[styles.button, styles.aloneButton]}>
+              <Text style={styles.aloneButtonText}>I WAS ALONE TODAY</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -68,9 +71,9 @@ class HealthyMind extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'stretch',
-    backgroundColor: '#ccc',
+    backgroundColor: 'rgb(181,203,207)',
   },
   welcome: {
     fontSize: 20,
@@ -91,13 +94,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   appsays: {
-    margin: 10,
     width: 250,
     alignSelf: 'flex-start',
+    backgroundColor: 'white',
+    padding: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    borderBottomRightRadius: 10,
   },
   usersays: {
-    margin: 10,
     alignSelf: 'flex-end',
+    backgroundColor: 'rgb(86,130,142)',
+    padding: 10,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    borderBottomLeftRadius: 10,
+  },
+  usersays_text: {
+    color: 'rgb(203,226,230)',
   },
   slider: {
     alignSelf: 'stretch',
@@ -111,8 +125,21 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     padding: 10,
     margin: 5,
-    backgroundColor: 'gray',
     borderRadius: 9999,
+  },
+  submitButton: {
+    backgroundColor: 'rgb(86,130,142)',
+  },
+  submitButtonText: {
+    color: 'rgb(203,226,230)',
+  },
+  aloneButton: {
+    borderColor: 'rgb(86,130,142)',
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(0,0,0,0)'
+  },
+  aloneButtonText: {
+    color: 'white',
   },
   conversation: {
     margin: 20,
