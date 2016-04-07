@@ -4,45 +4,100 @@
  */
 
 import React, {
+  Animated,
   AppRegistry,
   Component,
   StyleSheet,
   Text,
   View,
+  ScrollView,
   StatusBar,
   SliderIOS,
   TouchableOpacity
 } from 'react-native';
 
+class DialogLine extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      bounceValue: new Animated.Value(0),
+    };
+  }
+
+  componentDidMount() {
+    this.state.bounceValue.setValue(0);
+    Animated.spring(
+      this.state.bounceValue,
+      {
+        toValue: 1,
+        friction: 10,
+      }
+    ).start();
+  }
+
+  render() {
+    console.log(this);
+    console.log(this.state);
+    var anim = {transform: [{scale: this.state.bounceValue}]};
+    return <Animated.View style={[(this.props.isUser ? styles.usersays : styles.appsays), anim]}>
+      <Text style={this.props.isUser ? styles.usersays_text : styles.appsays_text}>
+        {this.props.text}
+      </Text>
+    </Animated.View>;
+  }
+}
+
 class HealthyMind extends Component {
+  constructor() {
+    super();
+    this.state = {
+      conversation: []
+    };
+  }
+
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState({
+        conversation: [
+          ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
+        ]
+      });
+    }, 1000);
+    setTimeout(() => {
+      this.setState({
+        conversation: [
+          ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
+          ['user', 'Yes'],
+        ]
+      });
+    }, 2000);
+    setTimeout(() => {
+      this.setState({
+        conversation: [
+          ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
+          ['user', 'Yes'],
+          ['hm', 'Great! Before we begin, How connected did you feel to people around you today?'],
+        ]
+      });
+    }, 3000);
+  }
+
   render() {
     return (
       <View style={styles.container}>
-        <StatusBar hidden={true} />
+        <StatusBar />
         <View style={styles.topbar}>
           <Text style={styles.appname}>
             HEALTHY MIND
           </Text>
         </View>
-        <View style={styles.conversation}>
-          <View style={styles.appsays}>
-            <Text style={styles.appsays_text}>
-              I hope you are having a great evening.
-              Are evenings generally a good time to meditate?
-            </Text>
-          </View>
-          <View style={styles.usersays}>
-            <Text style={styles.usersays_text}>
-              Yes
-            </Text>
-          </View>
-          <View style={styles.appsays}>
-            <Text style={styles.appsays_text}>
-              Great! Before we begin,
-              How connected did you feel to people around you today?
-            </Text>
-          </View>
-        </View>
+        <ScrollView style={styles.conversation}>
+          {
+            this.state.conversation.map(([speaker, line], i) => {
+              return <DialogLine isUser={speaker === 'user'} text={line} key={i} />;
+            })
+          }
+        </ScrollView>
         <View style={styles.controls}>
           <SliderIOS style={styles.slider}
             minimumTrackTintColor={'white'}
@@ -62,6 +117,11 @@ class HealthyMind extends Component {
               <Text style={styles.aloneButtonText}>I WAS ALONE TODAY</Text>
             </View>
           </TouchableOpacity>
+        </View>
+        <View style={styles.bottombar}>
+          <Text style={styles.appname}>
+            bottom controls here
+          </Text>
         </View>
       </View>
     );
@@ -85,11 +145,25 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 5,
   },
+
   topbar: {
     padding: 20,
+    paddingTop: 40,
     backgroundColor: 'white',
     alignSelf: 'stretch',
   },
+  conversation: {
+    margin: 20,
+  },
+  controls: {
+    margin: 20,
+  },
+  bottombar: {
+    padding: 25,
+    backgroundColor: 'white',
+    alignSelf: 'stretch',
+  },
+
   appname: {
     textAlign: 'center',
   },
@@ -101,6 +175,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     borderBottomRightRadius: 10,
+    marginBottom: 10,
   },
   usersays: {
     alignSelf: 'flex-end',
@@ -109,6 +184,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     borderBottomLeftRadius: 10,
+    marginBottom: 10,
   },
   usersays_text: {
     color: 'rgb(203,226,230)',
@@ -141,12 +217,6 @@ const styles = StyleSheet.create({
   aloneButtonText: {
     color: 'white',
   },
-  conversation: {
-    margin: 20,
-  },
-  controls: {
-    margin: 20,
-  }
 });
 
 AppRegistry.registerComponent('HealthyMind', () => HealthyMind);
