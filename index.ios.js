@@ -14,7 +14,9 @@ import React, {
   StatusBar,
   SliderIOS,
   TouchableOpacity,
-  Image
+  Image,
+  Navigator,
+  Dimensions,
 } from 'react-native';
 
 class DialogLine extends Component {
@@ -46,7 +48,7 @@ class DialogLine extends Component {
   }
 }
 
-class HealthyMind extends Component {
+class ConversationPage extends Component {
   constructor() {
     super();
     this.state = {
@@ -55,7 +57,9 @@ class HealthyMind extends Component {
   }
 
   componentDidMount() {
+    this._isMounted = true;
     setTimeout(() => {
+     if (!this._isMounted) return;
       this.setState({
         conversation: [
           ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
@@ -63,6 +67,7 @@ class HealthyMind extends Component {
       });
     }, 1000);
     setTimeout(() => {
+     if (!this._isMounted) return;
       this.setState({
         conversation: [
           ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
@@ -71,6 +76,7 @@ class HealthyMind extends Component {
       });
     }, 2000);
     setTimeout(() => {
+     if (!this._isMounted) return;
       this.setState({
         conversation: [
           ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
@@ -79,6 +85,49 @@ class HealthyMind extends Component {
         ]
       });
     }, 3000);
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
+  }
+
+  render() {
+    return <View>
+      <ScrollView style={styles.conversation}>
+        {
+          this.state.conversation.map(([speaker, line], i) => {
+            return <DialogLine isUser={speaker === 'user'} text={line} key={i} />;
+          })
+        }
+      </ScrollView>
+      <View style={styles.controls}>
+        <SliderIOS style={styles.slider}
+          minimumTrackTintColor={'white'}
+          maximumTrackTintColor={'white'}
+        />
+        <View style={styles.spectrum}>
+          <Text style={styles.spectrum_min}>Not Connected at all</Text>
+          <Text style={styles.spectrum_max}>Very Connected</Text>
+        </View>
+        <TouchableOpacity>
+          <View style={[styles.button, styles.submitButton]}>
+            <Text style={styles.submitButtonText}>SUBMIT</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <View style={[styles.button, styles.aloneButton]}>
+            <Text style={styles.aloneButtonText}>I WAS ALONE TODAY</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </View>;
+  }
+}
+
+class MainFrame extends Component {
+  constructor() {
+    super();
+    this.state = {};
   }
 
   render() {
@@ -92,38 +141,12 @@ class HealthyMind extends Component {
             <Image style={styles.menu_button} source={require('./img/menu.png')} />
           </TouchableOpacity>
         </View>
-        <ScrollView style={styles.conversation}>
-          {
-            this.state.conversation.map(([speaker, line], i) => {
-              return <DialogLine isUser={speaker === 'user'} text={line} key={i} />;
-            })
-          }
-        </ScrollView>
-        <View style={styles.controls}>
-          <SliderIOS style={styles.slider}
-            minimumTrackTintColor={'white'}
-            maximumTrackTintColor={'white'}
-          />
-          <View style={styles.spectrum}>
-            <Text style={styles.spectrum_min}>Not Connected at all</Text>
-            <Text style={styles.spectrum_max}>Very Connected</Text>
-          </View>
-          <TouchableOpacity>
-            <View style={[styles.button, styles.submitButton]}>
-              <Text style={styles.submitButtonText}>SUBMIT</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <View style={[styles.button, styles.aloneButton]}>
-              <Text style={styles.aloneButtonText}>I WAS ALONE TODAY</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {this.props.content}
         <View style={styles.bottombar}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={this.props.onMountains}>
             <Image source={require('./img/mountains.png')} style={styles.bottombutton} />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={this.props.onChat}>
             <Image source={require('./img/speech.png')} style={styles.bottombutton} />
           </TouchableOpacity>
           <TouchableOpacity>
@@ -131,6 +154,43 @@ class HealthyMind extends Component {
           </TouchableOpacity>
         </View>
       </View>
+    );
+  }
+}
+
+class HealthyMind extends Component {
+  constructor() {
+    super();
+    this.state = {};
+  }
+
+  render() {
+    return (
+      <Navigator
+        initialRoute={{page: 'chat'}}
+        renderScene={(route, navigator) => {
+          switch (route.page) {
+            case 'chat':
+              return <MainFrame content={
+                <ConversationPage />
+              } onMountains={() => {
+                navigator.push({page: 'path'});
+              }} />;
+            case 'path':
+              return <MainFrame content={
+                <ScrollView>
+                  <Image source={require('./img/path.png')} style={{
+                    width: Dimensions.get('window').width,
+                    height: Dimensions.get('window').width * 1080 / 748,
+                    resizeMode: 'contain',
+                  }} />
+                </ScrollView>
+              } onChat={() => {
+                navigator.push({page: 'chat'});
+              }} />;
+          }
+        }}
+      />
     );
   }
 }
@@ -169,7 +229,7 @@ const styles = StyleSheet.create({
     margin: 20,
   },
   bottombar: {
-    padding: 16,
+    padding: 10,
     backgroundColor: 'white',
     alignSelf: 'stretch',
     flexDirection: 'row',
