@@ -13,7 +13,8 @@ import React, {
   ScrollView,
   StatusBar,
   SliderIOS,
-  TouchableOpacity
+  TouchableOpacity,
+  Image
 } from 'react-native';
 
 class DialogLine extends Component {
@@ -36,8 +37,6 @@ class DialogLine extends Component {
   }
 
   render() {
-    console.log(this);
-    console.log(this.state);
     var anim = {transform: [{scale: this.state.bounceValue}]};
     return <Animated.View style={[(this.props.isUser ? styles.usersays : styles.appsays), anim]}>
       <Text style={this.props.isUser ? styles.usersays_text : styles.appsays_text}>
@@ -87,9 +86,11 @@ class HealthyMind extends Component {
       <View style={styles.container}>
         <StatusBar />
         <View style={styles.topbar}>
-          <Text style={styles.appname}>
-            HEALTHY MIND
-          </Text>
+          <View style={styles.topside} />
+          <Image style={styles.appname_image} source={require('./img/healthymind.png')} />
+          <TouchableOpacity>
+            <Image style={styles.menu_button} source={require('./img/menu.png')} />
+          </TouchableOpacity>
         </View>
         <ScrollView style={styles.conversation}>
           {
@@ -119,9 +120,15 @@ class HealthyMind extends Component {
           </TouchableOpacity>
         </View>
         <View style={styles.bottombar}>
-          <Text style={styles.appname}>
-            bottom controls here
-          </Text>
+          <TouchableOpacity>
+            <Image source={require('./img/mountains.png')} style={styles.bottombutton} />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Image source={require('./img/speech.png')} style={styles.bottombutton} />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Image source={require('./img/cort.png')} style={styles.bottomuserpic} />
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -147,10 +154,13 @@ const styles = StyleSheet.create({
   },
 
   topbar: {
-    padding: 20,
-    paddingTop: 40,
+    padding: 15,
+    paddingTop: 35,
     backgroundColor: 'white',
     alignSelf: 'stretch',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   conversation: {
     margin: 20,
@@ -159,13 +169,34 @@ const styles = StyleSheet.create({
     margin: 20,
   },
   bottombar: {
-    padding: 25,
+    padding: 16,
     backgroundColor: 'white',
     alignSelf: 'stretch',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
+  topside: {
+    width: 30,
+  },
+  menu_button: {
+    width: 30,
+    resizeMode: 'contain',
+  },
+  bottombutton: {
+    resizeMode: 'contain',
+    height: 32,
+  },
+  bottomuserpic: {
+    resizeMode: 'contain',
+    height: 40,
+  },
   appname: {
-    textAlign: 'center',
+  },
+  appname_image: {
+    height: 18,
+    resizeMode: 'contain',
   },
   appsays: {
     width: 250,
