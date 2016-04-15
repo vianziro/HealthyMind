@@ -19,6 +19,9 @@ import React, {
   Dimensions,
 } from 'react-native';
 
+import {convo} from './conversation';
+import update from 'react-addons-update';
+
 class DialogLine extends Component {
   constructor(props) {
     super(props);
@@ -52,73 +55,93 @@ class ConversationPage extends Component {
   constructor() {
     super();
     this.state = {
-      conversation: []
+      history: [],
+      buttons: [],
+      future: convo.c1,
     };
   }
 
   componentDidMount() {
     this._isMounted = true;
-    setTimeout(() => {
-     if (!this._isMounted) return;
-      this.setState({
-        conversation: [
-          ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
-        ]
-      });
-    }, 1000);
-    setTimeout(() => {
-     if (!this._isMounted) return;
-      this.setState({
-        conversation: [
-          ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
-          ['user', 'Yes'],
-        ]
-      });
-    }, 2000);
-    setTimeout(() => {
-     if (!this._isMounted) return;
-      this.setState({
-        conversation: [
-          ['hm', 'I hope you are having a great evening. Are evenings generally a good time to meditate?'],
-          ['user', 'Yes'],
-          ['hm', 'Great! Before we begin, How connected did you feel to people around you today?'],
-        ]
-      });
-    }, 3000);
+    this._paused = false;
   }
 
   componentWillUnmount() {
     this._isMounted = false;
   }
 
+  checkPop() {
+    if (this._paused) return;
+    if (this.state.buttons.length != 0) return;
+
+    var nextThing = this.state.future[0];
+
+    if (typeof nextThing === 'string') {
+      this._paused = true;
+      setTimeout(() => {
+        this.setState((prevState) => {
+          return update(prevState, {
+            history: {$push: [['app', prevState.future[0]]]},
+            future: {$apply: (xs) => {return xs.slice(1);}},
+          });
+        });
+        this._paused = false;
+      }, 1000);
+    } else if (Array.isArray(nextThing)) {
+      if (Array.isArray(nextThing[0])) {
+        // buttons
+        this.setState((prevState) => {
+          return update(prevState, {
+            buttons: {$set: prevState.future[0]},
+            future: {$apply: (xs) => {return xs.slice(1);}},
+          });
+        });
+      } else {
+        // jump
+        this.setState({
+          future: convo[nextThing[0]],
+        });
+      }
+    }
+  }
+
   render() {
-    return <View>
+    setTimeout(() => {this.checkPop()}, 0);
+    return <View style={{height: Dimensions.get('window').height - 20 - 60 - 50}}>
       <ScrollView style={styles.conversation}>
         {
-          this.state.conversation.map(([speaker, line], i) => {
+          this.state.history.map(([speaker, line], i) => {
             return <DialogLine isUser={speaker === 'user'} text={line} key={i} />;
           })
         }
       </ScrollView>
       <View style={styles.controls}>
-        <SliderIOS style={styles.slider}
-          minimumTrackTintColor={'white'}
-          maximumTrackTintColor={'white'}
-        />
-        <View style={styles.spectrum}>
-          <Text style={styles.spectrum_min}>Not Connected at all</Text>
-          <Text style={styles.spectrum_max}>Very Connected</Text>
-        </View>
-        <TouchableOpacity>
-          <View style={[styles.button, styles.submitButton]}>
-            <Text style={styles.submitButtonText}>SUBMIT</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <View style={[styles.button, styles.aloneButton]}>
-            <Text style={styles.aloneButtonText}>I WAS ALONE TODAY</Text>
-          </View>
-        </TouchableOpacity>
+        {
+          this.state.buttons.map(([text, jump], i) => {
+            return <TouchableOpacity key={i} onPress={() => {
+              if (jump === undefined) {
+                this.setState((prevState) => {
+                  return update(prevState, {
+                    buttons: {$set: []},
+                    history: {$push: [['user', text]]},
+                  });
+                })
+              } else {
+                this.setState((prevState) => {
+                  return update(prevState, {
+                    buttons: {$set: []},
+                    history: {$push: [['user', text]]},
+                    future: {$set: convo[jump]},
+                  });
+                })
+              }
+            }}>
+              <View style={[styles.button, styles.submitButton]}>
+                <Text style={styles.submitButtonText}>{text}</Text>
+              </View>
+            </TouchableOpacity>;
+          })
+        }
       </View>
     </View>;
   }
@@ -141,7 +164,7 @@ class MainFrame extends Component {
             <Image style={styles.menu_button} source={require('./img/menu.png')} />
           </TouchableOpacity>
         </View>
-        {this.props.content}
+        {this.props.children}
         <View style={styles.bottombar}>
           <TouchableOpacity onPress={this.props.onMountains}>
             <Image source={require('./img/mountains.png')} style={styles.bottombutton} />
@@ -171,13 +194,15 @@ class HealthyMind extends Component {
         renderScene={(route, navigator) => {
           switch (route.page) {
             case 'chat':
-              return <MainFrame content={
-                <ConversationPage />
-              } onMountains={() => {
+              return <MainFrame onMountains={() => {
                 navigator.push({page: 'path'});
-              }} />;
+              }}>
+                <ConversationPage />
+              </MainFrame>;
             case 'path':
-              return <MainFrame content={
+              return <MainFrame onChat={() => {
+                navigator.push({page: 'chat'});
+              }}>
                 <ScrollView>
                   <Image source={require('./img/path.png')} style={{
                     width: Dimensions.get('window').width,
@@ -185,9 +210,7 @@ class HealthyMind extends Component {
                     resizeMode: 'contain',
                   }} />
                 </ScrollView>
-              } onChat={() => {
-                navigator.push({page: 'chat'});
-              }} />;
+              </MainFrame>;
           }
         }}
       />
@@ -221,6 +244,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
+    height: 20 + 60,
   },
   conversation: {
     margin: 20,
@@ -235,6 +259,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    height: 50,
   },
 
   topside: {
