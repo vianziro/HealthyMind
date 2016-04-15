@@ -21,6 +21,7 @@ import React, {
 
 import {convo} from './conversation';
 import update from 'react-addons-update';
+import InvertibleScrollView from 'react-native-invertible-scroll-view';
 
 class DialogLine extends Component {
   constructor(props) {
@@ -81,7 +82,7 @@ class ConversationPage extends Component {
       setTimeout(() => {
         this.setState((prevState) => {
           return update(prevState, {
-            history: {$push: [['app', prevState.future[0]]]},
+            history: {$unshift: [['app', prevState.future[0]]]},
             future: {$apply: (xs) => {return xs.slice(1);}},
           });
         });
@@ -90,12 +91,14 @@ class ConversationPage extends Component {
     } else if (Array.isArray(nextThing)) {
       if (Array.isArray(nextThing[0])) {
         // buttons
-        this.setState((prevState) => {
-          return update(prevState, {
-            buttons: {$set: prevState.future[0]},
-            future: {$apply: (xs) => {return xs.slice(1);}},
+        setTimeout(() => {
+          this.setState((prevState) => {
+            return update(prevState, {
+              buttons: {$set: prevState.future[0]},
+              future: {$apply: (xs) => {return xs.slice(1);}},
+            });
           });
-        });
+        }, 1000);
       } else {
         // jump
         this.setState({
@@ -108,13 +111,13 @@ class ConversationPage extends Component {
   render() {
     setTimeout(() => {this.checkPop()}, 0);
     return <View style={{height: Dimensions.get('window').height - 20 - 60 - 50}}>
-      <ScrollView style={styles.conversation}>
+      <InvertibleScrollView inverted style={styles.conversation}>
         {
           this.state.history.map(([speaker, line], i) => {
-            return <DialogLine isUser={speaker === 'user'} text={line} key={i} />;
+            return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
           })
         }
-      </ScrollView>
+      </InvertibleScrollView>
       <View style={styles.controls}>
         {
           this.state.buttons.map(([text, jump], i) => {
@@ -123,14 +126,14 @@ class ConversationPage extends Component {
                 this.setState((prevState) => {
                   return update(prevState, {
                     buttons: {$set: []},
-                    history: {$push: [['user', text]]},
+                    history: {$unshift: [['user', text]]},
                   });
                 })
               } else {
                 this.setState((prevState) => {
                   return update(prevState, {
                     buttons: {$set: []},
-                    history: {$push: [['user', text]]},
+                    history: {$unshift: [['user', text]]},
                     future: {$set: convo[jump]},
                   });
                 })
