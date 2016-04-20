@@ -1,6 +1,7 @@
 package com.healthymind;
 
 import com.facebook.react.ReactActivity;
+import ca.jaysoo.extradimensions.ExtraDimensionsPackage;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 
@@ -34,7 +35,9 @@ public class MainActivity extends ReactActivity {
     @Override
     protected List<ReactPackage> getPackages() {
         return Arrays.<ReactPackage>asList(
-            new MainReactPackage()
+            new MainReactPackage(),
+            new ExtraDimensionsPackage(this)
+            // MT: I had to add the "this" in above line, rnpm didn't put it there
         );
     }
 }

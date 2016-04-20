@@ -12,7 +12,6 @@ import React, {
   View,
   ScrollView,
   StatusBar,
-  SliderIOS,
   TouchableOpacity,
   Image,
   Navigator,
@@ -193,7 +192,7 @@ class HealthyMind extends Component {
   render() {
     return (
       <Navigator
-        initialRoute={{page: 'chat'}}
+        initialRoute={{page: 'path'}}
         renderScene={(route, navigator) => {
           switch (route.page) {
             case 'chat':
