@@ -15,6 +15,8 @@ import React, {
   TouchableOpacity,
   Image,
   Navigator,
+  DatePickerIOS,
+  TimePickerAndroid,
 } from 'react-native';
 
 import {convo} from './conversation';
@@ -51,6 +53,49 @@ class DialogLine extends Component {
   }
 }
 
+class MTTimePicker extends Component {
+  constructor() {
+    super();
+    this.state = {
+      date: new Date(),
+    }
+  }
+
+  render() {
+    if (React.Platform.OS === 'ios') {
+      // iOS date picker
+      return <View>
+        <DatePickerIOS
+          date={this.state.date}
+          mode="time"
+          onDateChange={(date) => { this.setState({date}); }}
+        />
+        <TouchableOpacity onPress={() => {
+          this.props.onPick({hour: this.state.date.getHours(), minute: this.state.date.getMinutes()});
+        }}>
+          <View style={[styles.button, styles.submitButton]}>
+            <Text style={styles.submitButtonText}>Submit</Text>
+          </View>
+        </TouchableOpacity>
+      </View>;
+    } else {
+      // android date picker
+      return <TouchableOpacity key={0} onPress={() => {
+        TimePickerAndroid.open({
+          // empty
+        }).then(({action, hour, minute}) => {
+          if (action === TimePickerAndroid.dismissedAction) return;
+          this.props.onPick({hour, minute});
+        });
+      }}>
+        <View style={[styles.button, styles.submitButton]}>
+          <Text style={styles.submitButtonText}>Pick a time</Text>
+        </View>
+      </TouchableOpacity>;
+    }
+  }
+}
+
 class ConversationPage extends Component {
   constructor() {
     super();
@@ -58,6 +103,7 @@ class ConversationPage extends Component {
       history: [],
       buttons: [],
       future: convo.c1,
+      pickdate: false,
     };
   }
 
@@ -73,19 +119,30 @@ class ConversationPage extends Component {
   checkPop() {
     if (this._paused) return;
     if (this.state.buttons.length != 0) return;
+    if (this.state.pickdate) return;
 
     var nextThing = this.state.future[0];
+    if (nextThing === undefined) return;
 
     if (typeof nextThing === 'string') {
       this._paused = true;
       setTimeout(() => {
         if (this._isMounted) {
-          this.setState((prevState) => {
-            return update(prevState, {
-              history: {$unshift: [['app', prevState.future[0]]]},
-              future: {$apply: (xs) => {return xs.slice(1);}},
+          if (nextThing === '__PICKDATE__') {
+            this.setState((prevState) => {
+              return update(prevState, {
+                pickdate: {$set: true},
+                future: {$apply: (xs) => {return xs.slice(1);}},
+              });
             });
-          });
+          } else {
+            this.setState((prevState) => {
+              return update(prevState, {
+                history: {$unshift: [['app', prevState.future[0]]]},
+                future: {$apply: (xs) => {return xs.slice(1);}},
+              });
+            });
+          }
         }
         this._paused = false;
       }, 1000);
@@ -123,30 +180,43 @@ class ConversationPage extends Component {
       </InvertibleScrollView>
       <View style={styles.controls}>
         {
-          this.state.buttons.map(([text, jump], i) => {
-            return <TouchableOpacity key={i} onPress={() => {
-              if (jump === undefined) {
-                this.setState((prevState) => {
-                  return update(prevState, {
-                    buttons: {$set: []},
-                    history: {$unshift: [['user', text]]},
-                  });
-                })
-              } else {
-                this.setState((prevState) => {
-                  return update(prevState, {
-                    buttons: {$set: []},
-                    history: {$unshift: [['user', text]]},
-                    future: {$set: convo[jump]},
-                  });
-                })
-              }
-            }}>
-              <View style={[styles.button, styles.submitButton]}>
-                <Text style={styles.submitButtonText}>{text}</Text>
-              </View>
-            </TouchableOpacity>;
-          })
+          this.state.pickdate ? (
+            <MTTimePicker onPick={({hour, minute}) => {
+              var minute_ = minute < 10 ? '0' + minute : '' + minute;
+              this.setState((prevState) => {
+                return update(prevState, {
+                  buttons: {$set: []},
+                  history: {$unshift: [['user', `${hour}:${minute_}`]]},
+                  pickdate: {$set: false},
+                });
+              });
+            }} />
+          ) : (
+            this.state.buttons.map(([text, jump], i) => {
+              return <TouchableOpacity key={i} onPress={() => {
+                if (jump === undefined) {
+                  this.setState((prevState) => {
+                    return update(prevState, {
+                      buttons: {$set: []},
+                      history: {$unshift: [['user', text]]},
+                    });
+                  })
+                } else {
+                  this.setState((prevState) => {
+                    return update(prevState, {
+                      buttons: {$set: []},
+                      history: {$unshift: [['user', text]]},
+                      future: {$set: convo[jump]},
+                    });
+                  })
+                }
+              }}>
+                <View style={[styles.button, styles.submitButton]}>
+                  <Text style={styles.submitButtonText}>{text}</Text>
+                </View>
+              </TouchableOpacity>;
+            })
+          )
         }
       </View>
     </View>;
