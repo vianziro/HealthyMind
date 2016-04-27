@@ -20,6 +20,7 @@ import React, {
 } from 'react-native';
 
 import {convo} from './conversation';
+import {getDialog, availablePaths, titles, descriptions} from './progress';
 import update from 'react-addons-update';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
 import Dims from './Dims';
@@ -102,7 +103,7 @@ class ConversationPage extends Component {
     this.state = {
       history: [],
       buttons: [],
-      future: convo.c1,
+      future: convo.intro,
       pickdate: false,
     };
   }
@@ -257,6 +258,30 @@ class MainFrame extends Component {
   }
 }
 
+class PathPage extends Component {
+  constructor() {
+    super();
+    this.state = {};
+  }
+
+  render() {
+    return <ScrollView>
+      {
+        availablePaths(this.props.numCompleted).map((path, i) => {
+          return (
+            <TouchableOpacity onPress={() => null} key={i}>
+              <View>
+                <Text>{ titles[path] }</Text>
+                <Text>{ descriptions[path] }</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })
+      }
+    </ScrollView>;
+  }
+}
+
 class HealthyMind extends Component {
   constructor() {
     super();
@@ -279,13 +304,7 @@ class HealthyMind extends Component {
               return <MainFrame onChat={() => {
                 navigator.resetTo({page: 'chat'});
               }}>
-                <ScrollView>
-                  <Image source={require('./img/path.png')} style={{
-                    width: Dims.getWidth(),
-                    height: Dims.getWidth() * 1080 / 748,
-                    resizeMode: 'contain',
-                  }} />
-                </ScrollView>
+                <PathPage numCompleted={2} />
               </MainFrame>;
           }
         }}
