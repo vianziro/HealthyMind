@@ -20,7 +20,7 @@ import React, {
 } from 'react-native';
 
 import {convo} from './conversation';
-import {getDialog, availablePaths, titles, descriptions} from './progress';
+import Progress from './progress';
 import update from 'react-addons-update';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
 import Dims from './Dims';
@@ -103,7 +103,7 @@ class ConversationPage extends Component {
     this.state = {
       history: [],
       buttons: [],
-      future: convo.intro,
+      future: [],
       pickdate: false,
     };
   }
@@ -111,6 +111,9 @@ class ConversationPage extends Component {
   componentDidMount() {
     this._isMounted = true;
     this._paused = false;
+    this.setState({
+      future: convo[this.props.initConversation],
+    });
   }
 
   componentWillUnmount() {
@@ -160,6 +163,21 @@ class ConversationPage extends Component {
             });
           }
         }, 1000);
+      } else if (nextThing[0] === '__MEDIA__') {
+        // play media, mark progress
+        this._paused = true;
+        setTimeout(() => {
+          if (this._isMounted) {
+            this.setState((prevState) => {
+              return update(prevState, {
+                history: {$unshift: [['app', `(play media ${nextThing[1]})`]]},
+                future: {$apply: (xs) => {return xs.slice(1);}},
+              });
+            });
+          }
+          this._paused = false;
+        }, 1000);
+        this.props.onComplete(nextThing[1]);
       } else {
         // jump
         this.setState({
@@ -249,7 +267,7 @@ class MainFrame extends Component {
           <TouchableOpacity onPress={this.props.onChat}>
             <Image source={require('./img/speech.png')} style={styles.bottombutton} />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={this.props.onCort}>
             <Image source={require('./img/cort.png')} style={styles.bottomuserpic} />
           </TouchableOpacity>
         </View>
@@ -267,16 +285,26 @@ class PathPage extends Component {
   render() {
     return <ScrollView>
       {
-        availablePaths(this.props.numCompleted).map((path, i) => {
-          return (
-            <TouchableOpacity onPress={() => null} key={i}>
-              <View>
-                <Text>{ titles[path] }</Text>
-                <Text>{ descriptions[path] }</Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })
+        (() => {
+          const paths = Progress.availablePaths(this.props.numCompleted);
+          if (paths.length === 0) {
+            return <Text style={styles.path}>
+              You haven't unlocked any videos! Start chatting by hitting
+              the speech icon below.
+            </Text>
+          } else {
+            return paths.map((path, i) => {
+              return (
+                <TouchableOpacity onPress={() => null} key={i}>
+                  <View style={styles.path}>
+                    <Text style={styles.pathTitle}>{ Progress.titles[path] }</Text>
+                    <Text style={styles.pathDescription}>{ Progress.descriptions[path] }</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          }
+        })()
       }
     </ScrollView>;
   }
@@ -285,7 +313,26 @@ class PathPage extends Component {
 class HealthyMind extends Component {
   constructor() {
     super();
-    this.state = {};
+    this.state = {
+      progress: 0,
+      lastTime: Date.now(),
+    };
+  }
+
+  componentDidMount() {
+    this.updateProgress();
+  }
+
+  updateProgress() {
+    Progress.getProgress((num, time) => {
+      this.setState({progress: num, lastTime: time});
+    });
+  }
+
+  completeMedia(num) {
+    Progress.completeMedia(num, () => {
+      this.updateProgress();
+    });
   }
 
   render() {
@@ -295,16 +342,19 @@ class HealthyMind extends Component {
         renderScene={(route, navigator) => {
           switch (route.page) {
             case 'chat':
-              return <MainFrame onMountains={() => {
-                navigator.resetTo({page: 'path'});
-              }}>
-                <ConversationPage />
+              return <MainFrame
+                onMountains={() => navigator.resetTo({page: 'path'})}
+                onCort={() => Progress.clearProgress(() => this.updateProgress())}>
+                <ConversationPage
+                  initConversation={Progress.getDialog(this.state.progress, this.state.lastTime)}
+                  onComplete={(n) => this.completeMedia(n)}
+                />
               </MainFrame>;
             case 'path':
-              return <MainFrame onChat={() => {
-                navigator.resetTo({page: 'chat'});
-              }}>
-                <PathPage numCompleted={2} />
+              return <MainFrame
+                onChat={() => navigator.resetTo({page: 'chat'})}
+                onCort={() => Progress.clearProgress(() => this.updateProgress())}>
+                <PathPage numCompleted={this.state.progress} />
               </MainFrame>;
           }
         }}
@@ -427,6 +477,18 @@ const styles = StyleSheet.create({
   },
   aloneButtonText: {
     color: 'white',
+  },
+
+  path: {
+    padding: 10,
+    backgroundColor: 'white',
+    borderColor: 'black',
+    borderTopWidth: 2,
+  },
+  pathTitle: {
+    fontWeight: 'bold',
+  },
+  pathDescription: {
   },
 });
 

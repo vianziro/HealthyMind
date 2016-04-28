@@ -23,7 +23,7 @@ convo.lesson1intro = [
 ];
 
 convo.lesson1 = [
-  '__MEDIA__',
+  ['__MEDIA__', 1],
   'Nice job listening to the first lesson. It\'s exciting to think about changing our own brain.',
   [['Sure is!']],
   'Like Cort said, it\'s about training our mind so we are at our best.',
@@ -43,7 +43,7 @@ convo.practice1intro = [
 ];
 
 convo.practice1 = [
-  '__MEDIA__',
+  ['__MEDIA__', 2],
   'Great job on that practice.',
   "Tomorrow, we'll move on to the next lesson.",
   'See you then!',
