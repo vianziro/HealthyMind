@@ -5,4 +5,4 @@ exports.barInAppHeight = 20;
 exports.getWidth = () => Dimensions.get('window').width;
 
 exports.getHeight = () => Dimensions.get('window').height;
-
+exports.getRealHeight = exports.getHeight;

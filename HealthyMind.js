@@ -25,6 +25,7 @@ import update from 'react-addons-update';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
 import Dims from './Dims';
 import Sound from 'react-native-sound';
+import Orientation from 'react-native-orientation';
 
 const bgsound = new Sound('sizzle.mp3', Sound.MAIN_BUNDLE, (error) => {
   if (error) {
@@ -114,16 +115,25 @@ class ConversationPage extends Component {
       buttons: [],
       future: convo[props.initConversation],
       pickdate: false,
+      orientation: 'UNKNOWN',
     };
   }
 
   componentDidMount() {
     this._isMounted = true;
     this._paused = false;
+    Orientation.getOrientation((err, orient) => {
+      this.setState({orientation: orient});
+    });
+    this.orientationListener = (orient) => {
+      this.setState({orientation: orient});
+    };
+    Orientation.addOrientationListener(this.orientationListener);
   }
 
   componentWillUnmount() {
     this._isMounted = false;
+    Orientation.removeOrientationListener(this.orientationListener);
   }
 
   checkPop() {
@@ -159,6 +169,7 @@ class ConversationPage extends Component {
     } else if (Array.isArray(nextThing)) {
       if (Array.isArray(nextThing[0])) {
         // buttons
+        this._paused = true;
         setTimeout(() => {
           if (this._isMounted) {
             this.setState((prevState) => {
@@ -168,6 +179,7 @@ class ConversationPage extends Component {
               });
             });
           }
+          this._paused = false;
         }, 1000);
       } else if (nextThing[0] === '__MEDIA__') {
         // play media, mark progress
@@ -195,7 +207,7 @@ class ConversationPage extends Component {
 
   render() {
     setTimeout(() => {this.checkPop()}, 0);
-    return <View style={{height: Dims.getHeight() - Dims.barInAppHeight - 60 - 50}}>
+    return <View style={{height: Dims.getRealHeight(this.state.orientation) - Dims.barInAppHeight - 60 - 50}}>
       <InvertibleScrollView inverted style={styles.conversation}>
         {
           this.state.history.map(([speaker, line], i) => {

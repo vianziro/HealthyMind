@@ -120,6 +120,7 @@ android {
 }
 
 dependencies {
+    compile project(':react-native-orientation')
     compile project(':react-native-sound')
     compile project(':react-native-extra-dimensions-android')
     compile fileTree(dir: "libs", include: ["*.jar"])
