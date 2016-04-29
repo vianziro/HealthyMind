@@ -24,6 +24,15 @@ import Progress from './progress';
 import update from 'react-addons-update';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
 import Dims from './Dims';
+import Sound from 'react-native-sound';
+
+const bgsound = new Sound('sizzle.mp3', Sound.MAIN_BUNDLE, (error) => {
+  if (error) {
+    console.log('NO', error);
+  } else {
+    console.log('YES', bgsound);
+  }
+});
 
 class DialogLine extends Component {
   constructor(props) {
@@ -323,6 +332,10 @@ class HealthyMind extends Component {
   updateProgress() {
     Progress.getProgress((num, time) => {
       this.setState({progress: num, lastTime: time});
+    });
+
+    bgsound.play((success) => {
+      console.log('Did sound play?', success);
     });
   }
 
