@@ -23,7 +23,6 @@
 		146834051AC3E58100842450 /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
 		531611761CCE977600E771F2 /* libReact.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 146834041AC3E56700842450 /* libReact.a */; };
 		532381621CD3C80700C5833B /* Orientation.m in Sources */ = {isa = PBXBuildFile; fileRef = 532381611CD3C80700C5833B /* Orientation.m */; };
-		53A98C011CD2C23B008C6D02 /* sizzle.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 53A98C001CD2C23B008C6D02 /* sizzle.mp3 */; };
 		832341BD1AAA6AB300B99B32 /* libRCTText.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 832341B51AAA6A8300B99B32 /* libRCTText.a */; };
 		B68D5FF6C2364246AA002330 /* libRNSound.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 462EBD2E79554B328BD478E9 /* libRNSound.a */; };
 /* End PBXBuildFile section */
@@ -139,7 +138,6 @@
 		462EBD2E79554B328BD478E9 /* libRNSound.a */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = archive.ar; path = libRNSound.a; sourceTree = "<group>"; };
 		532381601CD3C80700C5833B /* Orientation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Orientation.h; sourceTree = "<group>"; };
 		532381611CD3C80700C5833B /* Orientation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Orientation.m; sourceTree = "<group>"; };
-		53A98C001CD2C23B008C6D02 /* sizzle.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; name = sizzle.mp3; path = ../sizzle.mp3; sourceTree = "<group>"; };
 		78C398B01ACF4ADC00677621 /* RCTLinking.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTLinking.xcodeproj; path = "../node_modules/react-native/Libraries/LinkingIOS/RCTLinking.xcodeproj"; sourceTree = "<group>"; };
 		832341B01AAA6A8300B99B32 /* RCTText.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = RCTText.xcodeproj; path = "../node_modules/react-native/Libraries/Text/RCTText.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -329,7 +327,6 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* HealthyMindTests */,
 				83CBBA001A601CBA00E9B192 /* Products */,
-				53A98C001CD2C23B008C6D02 /* sizzle.mp3 */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -555,7 +552,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				53A98C011CD2C23B008C6D02 /* sizzle.mp3 in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */,
 			);
