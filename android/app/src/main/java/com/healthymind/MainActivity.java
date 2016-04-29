@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import com.github.yamill.orientation.OrientationPackage;
 import com.zmxv.RNSound.RNSoundPackage;
-import ca.jaysoo.extradimensions.ExtraDimensionsPackage;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 
@@ -41,9 +40,7 @@ public class MainActivity extends ReactActivity {
         return Arrays.<ReactPackage>asList(
             new MainReactPackage(),
             new OrientationPackage(this),
-            new RNSoundPackage(),
-            new ExtraDimensionsPackage(this)
-            // MT: I had to add the "this" in above line, rnpm didn't put it there
+            new RNSoundPackage()
         );
     }
 

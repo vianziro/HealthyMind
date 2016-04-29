@@ -28,7 +28,7 @@ class StatusSpace extends Component {
   }
 
   render() {
-    if (this.state.orientation === 'PORTRAIT') {
+    if (this.state.orientation === 'PORTRAIT' || this.state.orientation === 'UNKNOWN') {
       return <View style={styles.blankspace} />;
     } else {
       return <View />;
