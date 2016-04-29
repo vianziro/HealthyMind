@@ -5,7 +5,7 @@ function getDialog(completedNum, completedTime) {
   switch (completedNum) {
     case 0: return 'intro';
     case 1: return 'practice1intro';
-    case 2: return timePassed ? lesson2 : 'notready';
+    case 2: return timePassed ? 'lesson2intro' : 'notready';
     default: return 'notready';
   }
 }

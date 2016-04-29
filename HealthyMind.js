@@ -55,8 +55,8 @@ class DialogLine extends Component {
 }
 
 class MTTimePicker extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       date: new Date(),
     }
@@ -98,12 +98,12 @@ class MTTimePicker extends Component {
 }
 
 class ConversationPage extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       history: [],
       buttons: [],
-      future: [],
+      future: convo[props.initConversation],
       pickdate: false,
     };
   }
@@ -111,9 +111,6 @@ class ConversationPage extends Component {
   componentDidMount() {
     this._isMounted = true;
     this._paused = false;
-    this.setState({
-      future: convo[this.props.initConversation],
-    });
   }
 
   componentWillUnmount() {
@@ -243,8 +240,8 @@ class ConversationPage extends Component {
 }
 
 class MainFrame extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {};
   }
 
@@ -277,8 +274,8 @@ class MainFrame extends Component {
 }
 
 class PathPage extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {};
   }
 
@@ -311,8 +308,8 @@ class PathPage extends Component {
 }
 
 class HealthyMind extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       progress: 0,
       lastTime: Date.now(),
@@ -343,8 +340,7 @@ class HealthyMind extends Component {
           switch (route.page) {
             case 'chat':
               return <MainFrame
-                onMountains={() => navigator.resetTo({page: 'path'})}
-                onCort={() => Progress.clearProgress(() => this.updateProgress())}>
+                onMountains={() => navigator.resetTo({page: 'path'})}>
                 <ConversationPage
                   initConversation={Progress.getDialog(this.state.progress, this.state.lastTime)}
                   onComplete={(n) => this.completeMedia(n)}

@@ -12,14 +12,11 @@ convo.intro = [
 ];
 
 convo.lesson1intro = [
-  'Do you want to listen to the first lesson now, it\'s about 5 minutes?',
+  'Do you want to listen to the first lesson now? It\'s about 5 minutes.',
   [['Now', 'lesson1'], ['Remind me later']],
   'Sounds great. When should I remind you?',
   '__PICKDATE__',
   'Fantastic. I\'ll remind you then.',
-  '...',
-  'Nice to see you back.',
-  ['lesson1intro'],
 ];
 
 convo.lesson1 = [
@@ -50,10 +47,19 @@ convo.practice1 = [
   [['Bye!']],
 ];
 
-convo.lesson2 = [
+convo.lesson2intro = [
   'Welcome back!',
-  'Time for the second lesson.'
+  'Are you ready for the second lesson?',
+  [['Yep', 'lesson2'], ['Remind me later']],
+  'Ok. When should I remind you?',
+  '__PICKDATE__',
+  "Sounds great! I'll see you then.",
+  [['OK!']],
 ];
+
+convo.lesson2 = [
+  ['__MEDIA__', 3],
+]
 
 convo.notready = [
   "Sorry; the next lesson isn't ready yet.",
