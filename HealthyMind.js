@@ -23,9 +23,8 @@ import {convo} from './conversation';
 import Progress from './progress';
 import update from 'react-addons-update';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
-import Dims from './Dims';
 import Sound from 'react-native-sound';
-import Orientation from 'react-native-orientation';
+import {StatusSpace} from './StatusSpace';
 
 const bgsound = new Sound('sizzle.mp3', Sound.MAIN_BUNDLE, (error) => {
   if (error) {
@@ -115,25 +114,16 @@ class ConversationPage extends Component {
       buttons: [],
       future: convo[props.initConversation],
       pickdate: false,
-      orientation: 'UNKNOWN',
     };
   }
 
   componentDidMount() {
     this._isMounted = true;
     this._paused = false;
-    Orientation.getOrientation((err, orient) => {
-      this.setState({orientation: orient});
-    });
-    this.orientationListener = (orient) => {
-      this.setState({orientation: orient});
-    };
-    Orientation.addOrientationListener(this.orientationListener);
   }
 
   componentWillUnmount() {
     this._isMounted = false;
-    Orientation.removeOrientationListener(this.orientationListener);
   }
 
   checkPop() {
@@ -207,7 +197,7 @@ class ConversationPage extends Component {
 
   render() {
     setTimeout(() => {this.checkPop()}, 0);
-    return <View style={{height: Dims.getRealHeight(this.state.orientation) - Dims.barInAppHeight - 60 - 50}}>
+    return <View style={{flex: 1}}>
       <InvertibleScrollView inverted style={styles.conversation}>
         {
           this.state.history.map(([speaker, line], i) => {
@@ -270,6 +260,7 @@ class MainFrame extends Component {
     return (
       <View style={styles.container}>
         <StatusBar />
+        <StatusSpace />
         <View style={styles.topbar}>
           <View style={styles.topside} />
           <Image style={styles.appname_image} source={require('./img/healthymind.png')} />
@@ -277,7 +268,9 @@ class MainFrame extends Component {
             <Image style={styles.menu_button} source={require('./img/menu.png')} />
           </TouchableOpacity>
         </View>
-        {this.props.children}
+        <View style={styles.maincontent}>
+          {this.props.children}
+        </View>
         <View style={styles.bottombar}>
           <TouchableOpacity onPress={this.props.onMountains}>
             <Image source={require('./img/mountains.png')} style={styles.bottombutton} />
@@ -404,19 +397,26 @@ const styles = StyleSheet.create({
 
   topbar: {
     padding: 15,
-    paddingTop: 15 + Dims.barInAppHeight,
+    paddingTop: 15,
     backgroundColor: 'white',
     alignSelf: 'stretch',
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
-    height: 60 + Dims.barInAppHeight,
+    height: 60,
+    flex: 0,
+  },
+  maincontent: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   conversation: {
     margin: 20,
+    flex: 1,
   },
   controls: {
     margin: 20,
+    flex: 0,
   },
   bottombar: {
     padding: 10,
@@ -426,6 +426,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 50,
+    flex: 0,
   },
 
   topside: {
