@@ -436,6 +436,7 @@ const styles = StyleSheet.create({
   },
   appname_image: {
     height: 18,
+    width: 18 * (256/28),
     resizeMode: 'contain',
   },
   appsays: {
