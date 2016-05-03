@@ -163,8 +163,16 @@ class ConversationPage extends Component {
           }
           this._paused = false;
         }, 1000);
+      } else if (nextThing[0] === '__PROGRESS__') {
+        // mark progress
+        this.props.onComplete(nextThing[1]);
+        this.setState((prevState) => {
+          return update(prevState, {
+            future: {$apply: (xs) => {return xs.slice(1);}},
+          });
+        });
       } else if (nextThing[0] === '__MEDIA__') {
-        // play media, mark progress
+        // play media
         this._paused = true;
         setTimeout(() => {
           if (this._isMounted) {
@@ -177,7 +185,6 @@ class ConversationPage extends Component {
           }
           this._paused = false;
         }, 1000);
-        this.props.onComplete(nextThing[1]);
       } else {
         // jump
         this.setState({
