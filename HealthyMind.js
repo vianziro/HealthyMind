@@ -55,12 +55,55 @@ class DialogLine extends Component {
   }
 }
 
+class SoundPlayer extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      playing: false,
+    };
+    this.hasEnded = false;
+  }
+
+  componentDidMount() {
+    this.sound = new Sound(this.props.sound, Sound.MAIN_BUNDLE, (error, props) => {
+      if (error) throw error;
+      this.play();
+    });
+  }
+
+  componentWillUnmount() {
+    this.sound.stop();
+    this.sound.release();
+  }
+
+  play() {
+    this.sound.play(() => {
+      if (!this.hasEnded) {
+        this.hasEnded = true;
+        this.props.onEnd();
+      }
+    });
+    this.setState({playing: true});
+  }
+
+  pause() {
+    this.sound.pause();
+    this.setState({playing: false});
+  }
+
+  render() {
+    return <Text>
+      Sound is {this.state.playing ? 'playing' : 'paused'}
+    </Text>;
+  }
+}
+
 class MTTimePicker extends Component {
   constructor(props) {
     super(props);
     this.state = {
       date: new Date(),
-    }
+    };
   }
 
   render() {
@@ -178,12 +221,11 @@ class ConversationPage extends Component {
           if (this._isMounted) {
             this.setState((prevState) => {
               return update(prevState, {
-                history: {$unshift: [['app', `(play media ${nextThing[1]})`]]},
+                history: {$unshift: [['media', 'test.mp3']]},
                 future: {$apply: (xs) => {return xs.slice(1);}},
               });
             });
           }
-          this._paused = false;
         }, 1000);
       } else {
         // jump
@@ -200,7 +242,14 @@ class ConversationPage extends Component {
       <InvertibleScrollView inverted style={styles.conversation}>
         {
           this.state.history.map(([speaker, line], i) => {
-            return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
+            if (speaker === 'media' && i == 0) {
+              return <SoundPlayer sound={line} onEnd={() => {
+                this._paused = false;
+                this.checkPop();
+              }} key={this.state.history.length - i} />;
+            } else {
+              return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
+            }
           })
         }
       </InvertibleScrollView>
