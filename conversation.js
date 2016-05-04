@@ -3,9 +3,9 @@ var convo = {};
 convo.intro = [
   'Hey there. Welcome to the healthy mind app.',
   'This app is arranged around a few main ideas.',
-  '1. The mind can be changed',
-  '2. Another idea',
-  '3. A third idea!',
+  //'1. The mind can be changed',
+  //'2. Another idea',
+  //'3. A third idea!',
   'My job is to be your guide.',
   'I\'ll check in with you here and then and help you meet your goals.',
   ['lesson1intro'],

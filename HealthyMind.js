@@ -62,6 +62,7 @@ class SoundPlayer extends Component {
       playing: false,
       ended: false,
       loaded: false,
+      bounceValue: new Animated.Value(0),
     };
     this.hasEnded = false;
     this.hasLoaded = false;
@@ -73,6 +74,15 @@ class SoundPlayer extends Component {
       this.setState({loaded: true});
       this.play();
     });
+
+    this.state.bounceValue.setValue(0);
+    Animated.spring(
+      this.state.bounceValue,
+      {
+        toValue: 1,
+        friction: 10,
+      }
+    ).start();
   }
 
   componentWillUnmount() {
@@ -96,19 +106,26 @@ class SoundPlayer extends Component {
   }
 
   render() {
-    if (this.state.ended) {
-      return null;
-    } else if (!this.state.loaded) {
-      return null;
-    } else if (this.state.playing) {
-      return <TouchableOpacity onPress={() => this.pause()}>
-        <Image source={require('./img/pause.png')} style={styles.playPause} />
-      </TouchableOpacity>;
-    } else {
-      return <TouchableOpacity onPress={() => this.play()}>
-        <Image source={require('./img/play.png')} style={styles.playPause} />
-      </TouchableOpacity>;
-    }
+    var anim = {transform: [{scale: this.state.bounceValue}]};
+    return <Animated.View style={anim}>
+      {
+        (() => {
+          if (this.state.ended) {
+            return <Image source={require('./img/check.png')} style={styles.playPause} />;
+          } else if (!this.state.loaded) {
+            return <Image source={require('./img/dots.png')} style={styles.playPause} />;
+          } else if (this.state.playing) {
+            return <TouchableOpacity onPress={() => this.pause()}>
+              <Image source={require('./img/pause.png')} style={styles.playPause} />
+            </TouchableOpacity>;
+          } else {
+            return <TouchableOpacity onPress={() => this.play()}>
+              <Image source={require('./img/play.png')} style={styles.playPause} />
+            </TouchableOpacity>;
+          }
+        })()
+      }
+    </Animated.View>;
   }
 }
 
@@ -263,7 +280,7 @@ class ConversationPage extends Component {
                   this.checkPop();
                 }} key={this.state.history.length - i} />;
               } else {
-                return <DialogLine isUser={false} text={'...'} key={this.state.history.length - i} />;
+                return <Image source={require('./img/check.png')} style={styles.playPause} key={this.state.history.length - i} />;
               }
             } else {
               return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
@@ -588,6 +605,8 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     resizeMode: 'contain',
+    marginBottom: 10,
+    alignSelf: 'center',
   }
 });
 
