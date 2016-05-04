@@ -60,13 +60,17 @@ class SoundPlayer extends Component {
     super(props);
     this.state = {
       playing: false,
+      ended: false,
+      loaded: false,
     };
     this.hasEnded = false;
+    this.hasLoaded = false;
   }
 
   componentDidMount() {
     this.sound = new Sound(this.props.sound, Sound.MAIN_BUNDLE, (error, props) => {
       if (error) throw error;
+      this.setState({loaded: true});
       this.play();
     });
   }
@@ -78,8 +82,8 @@ class SoundPlayer extends Component {
 
   play() {
     this.sound.play(() => {
-      if (!this.hasEnded) {
-        this.hasEnded = true;
+      if (!this.state.ended) {
+        this.setState({ended: true});
         this.props.onEnd();
       }
     });
@@ -92,9 +96,19 @@ class SoundPlayer extends Component {
   }
 
   render() {
-    return <Text>
-      Sound is {this.state.playing ? 'playing' : 'paused'}
-    </Text>;
+    if (this.state.ended) {
+      return null;
+    } else if (!this.state.loaded) {
+      return null;
+    } else if (this.state.playing) {
+      return <TouchableOpacity onPress={() => this.pause()}>
+        <Image source={require('./img/pause.png')} style={styles.playPause} />
+      </TouchableOpacity>;
+    } else {
+      return <TouchableOpacity onPress={() => this.play()}>
+        <Image source={require('./img/play.png')} style={styles.playPause} />
+      </TouchableOpacity>;
+    }
   }
 }
 
@@ -242,11 +256,15 @@ class ConversationPage extends Component {
       <InvertibleScrollView inverted style={styles.conversation}>
         {
           this.state.history.map(([speaker, line], i) => {
-            if (speaker === 'media' && i == 0) {
-              return <SoundPlayer sound={line} onEnd={() => {
-                this._paused = false;
-                this.checkPop();
-              }} key={this.state.history.length - i} />;
+            if (speaker === 'media') {
+              if (i === 0) {
+                return <SoundPlayer sound={line} onEnd={() => {
+                  this._paused = false;
+                  this.checkPop();
+                }} key={this.state.history.length - i} />;
+              } else {
+                return <DialogLine isUser={false} text={'...'} key={this.state.history.length - i} />;
+              }
             } else {
               return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
             }
@@ -565,6 +583,12 @@ const styles = StyleSheet.create({
   },
   pathDescription: {
   },
+
+  playPause: {
+    width: 90,
+    height: 90,
+    resizeMode: 'contain',
+  }
 });
 
 exports.HealthyMind = HealthyMind;
