@@ -147,7 +147,7 @@ class ConversationPage extends Component {
     this.state = {
       history: [],
       buttons: [],
-      future: convo[props.initConversation],
+      future: props.initLines,
       pickdate: false,
     };
   }
@@ -352,9 +352,12 @@ class PathPage extends Component {
               the speech icon below.
             </Text>
           } else {
-            return paths.map((path, i) => {
+            return paths.map(({path, cont}, i) => {
+              const loadPath = () => {
+                this.props.onChoose(cont ? convo[path] : convo[path].slice(0, 1));
+              };
               return (
-                <TouchableOpacity onPress={() => null} key={i}>
+                <TouchableOpacity onPress={loadPath} key={i}>
                   <View style={styles.path}>
                     <Text style={styles.pathTitle}>{ Progress.titles[path] }</Text>
                     <Text style={styles.pathDescription}>{ Progress.descriptions[path] }</Text>
@@ -404,15 +407,20 @@ class HealthyMind extends Component {
               return <MainFrame
                 onMountains={() => navigator.resetTo({page: 'path'})}>
                 <ConversationPage
-                  initConversation={Progress.getDialog(this.state.progress, this.state.lastTime)}
+                  initLines={route.lines}
                   onComplete={(n) => this.completeMedia(n)}
                 />
               </MainFrame>;
             case 'path':
               return <MainFrame
-                onChat={() => navigator.resetTo({page: 'chat'})}
+                onChat={() => navigator.resetTo({
+                  page: 'chat',
+                  lines: convo[Progress.getDialog(this.state.progress, this.state.lastTime)],
+                })}
                 onCort={() => Progress.clearProgress(() => this.updateProgress())}>
-                <PathPage numCompleted={this.state.progress} />
+                <PathPage numCompleted={this.state.progress} onChoose={(lines) => {
+                  navigator.resetTo({page: 'chat', lines: lines});
+                }} />
               </MainFrame>;
           }
         }}
