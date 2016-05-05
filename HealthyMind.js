@@ -17,6 +17,7 @@ import React, {
   Navigator,
   DatePickerIOS,
   TimePickerAndroid,
+  PushNotificationIOS,
 } from 'react-native';
 
 import {convo} from './conversation';
@@ -292,11 +293,21 @@ class ConversationPage extends Component {
         {
           this.state.pickdate ? (
             <MTTimePicker onPick={({hour, minute}) => {
-              var minute_ = minute < 10 ? '0' + minute : '' + minute;
+              var now = new Date();
+              var date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
+              if (date < now) {
+                date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, hour, minute);
+              }
+              if (React.Platform.OS === 'ios') {
+                PushNotificationIOS.scheduleLocalNotification({
+                  fireDate: date,
+                  alertBody: 'Ready to change your mind?',
+                });
+              }
               this.setState((prevState) => {
                 return update(prevState, {
                   buttons: {$set: []},
-                  history: {$unshift: [['user', `${hour}:${minute_}`]]},
+                  history: {$unshift: [['user', date.toLocaleString()]]},
                   pickdate: {$set: false},
                 });
               });
@@ -407,6 +418,37 @@ class PathPage extends Component {
   }
 }
 
+const initialNotification = React.Platform.OS === 'ios' ? PushNotificationIOS.popInitialNotification() : null;
+
+class Notifications extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidMount() {
+    if (React.Platform.OS === 'ios') {
+      PushNotificationIOS.requestPermissions();
+      this.listener = () => {
+        if (this.props.onNotification) this.props.onNotification();
+      };
+      PushNotificationIOS.addEventListener('localNotification', this.listener);
+      if (initialNotification) {
+        this.listener();
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    if (React.Platform.OS === 'ios') {
+      PushNotificationIOS.removeEventListener('localNotification', this.listener);
+    }
+  }
+
+  render() {
+    return null;
+  }
+}
+
 class HealthyMind extends Component {
   constructor(props) {
     super(props);
@@ -432,6 +474,13 @@ class HealthyMind extends Component {
     });
   }
 
+  goToChat(navigator) {
+    navigator.resetTo({
+      page: 'chat',
+      lines: convo[Progress.getDialog(this.state.progress, this.state.lastTime)],
+    });
+  }
+
   render() {
     return (
       <Navigator
@@ -445,17 +494,16 @@ class HealthyMind extends Component {
                   initLines={route.lines}
                   onComplete={(n) => this.completeMedia(n)}
                 />
+                <Notifications onNotification={() => this.goToChat(navigator)} />
               </MainFrame>;
             case 'path':
               return <MainFrame
-                onChat={() => navigator.resetTo({
-                  page: 'chat',
-                  lines: convo[Progress.getDialog(this.state.progress, this.state.lastTime)],
-                })}
+                onChat={() => this.goToChat(navigator)}
                 onCort={() => Progress.clearProgress(() => this.updateProgress())}>
                 <PathPage numCompleted={this.state.progress} onChoose={(lines) => {
                   navigator.resetTo({page: 'chat', lines: lines});
                 }} />
+                <Notifications onNotification={() => this.goToChat(navigator)} />
               </MainFrame>;
           }
         }}
