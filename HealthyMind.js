@@ -270,77 +270,81 @@ class ConversationPage extends Component {
 
   render() {
     setTimeout(() => {this.checkPop()}, 0);
-    return <View style={{flex: 1}}>
-      <InvertibleScrollView inverted style={styles.conversation}>
-        {
-          this.state.history.map(([speaker, line], i) => {
-            if (speaker === 'media') {
-              if (i === 0) {
-                return <SoundPlayer sound={line} onEnd={() => {
-                  this._paused = false;
-                  this.checkPop();
-                }} key={this.state.history.length - i} />;
-              } else {
+    var firstHistory = this.state.history[0];
+    if (firstHistory && firstHistory[0] === 'media') {
+      // full-screen media player
+      return <View style={{flex: 1, justifyContent: 'center'}}>
+        <SoundPlayer sound={firstHistory[1]} onEnd={() => {
+          this._paused = false;
+          this.checkPop();
+        }} />
+      </View>;
+    } else {
+      return <View style={{flex: 1}}>
+        <InvertibleScrollView inverted style={styles.conversation}>
+          {
+            this.state.history.map(([speaker, line], i) => {
+              if (speaker === 'media') {
                 return <Image source={require('./img/check.png')} style={styles.playPause} key={this.state.history.length - i} />;
+              } else {
+                return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
               }
-            } else {
-              return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
-            }
-          })
-        }
-      </InvertibleScrollView>
-      <View style={styles.controls}>
-        {
-          this.state.pickdate ? (
-            <MTTimePicker onPick={({hour, minute}) => {
-              var now = new Date();
-              var date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-              if (date < now) {
-                date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, hour, minute);
-              }
-              if (React.Platform.OS === 'ios') {
-                PushNotificationIOS.scheduleLocalNotification({
-                  fireDate: date.getTime(),
-                  alertBody: 'Ready to change your mind?',
-                });
-              }
-              this.setState((prevState) => {
-                return update(prevState, {
-                  buttons: {$set: []},
-                  history: {$unshift: [['user', date.toLocaleString()]]},
-                  pickdate: {$set: false},
-                });
-              });
-            }} />
-          ) : (
-            this.state.buttons.map(([text, jump], i) => {
-              return <TouchableOpacity key={i} onPress={() => {
-                if (jump === undefined) {
-                  this.setState((prevState) => {
-                    return update(prevState, {
-                      buttons: {$set: []},
-                      history: {$unshift: [['user', text]]},
-                    });
-                  })
-                } else {
-                  this.setState((prevState) => {
-                    return update(prevState, {
-                      buttons: {$set: []},
-                      history: {$unshift: [['user', text]]},
-                      future: {$set: convo[jump]},
-                    });
-                  })
-                }
-              }}>
-                <View style={[styles.button, styles.submitButton]}>
-                  <Text style={styles.submitButtonText}>{text}</Text>
-                </View>
-              </TouchableOpacity>;
             })
-          )
-        }
-      </View>
-    </View>;
+          }
+        </InvertibleScrollView>
+        <View style={styles.controls}>
+          {
+            this.state.pickdate ? (
+              <MTTimePicker onPick={({hour, minute}) => {
+                var now = new Date();
+                var date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
+                if (date < now) {
+                  date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, hour, minute);
+                }
+                if (React.Platform.OS === 'ios') {
+                  PushNotificationIOS.scheduleLocalNotification({
+                    fireDate: date.getTime(),
+                    alertBody: 'Ready to change your mind?',
+                  });
+                }
+                this.setState((prevState) => {
+                  return update(prevState, {
+                    buttons: {$set: []},
+                    history: {$unshift: [['user', date.toLocaleString()]]},
+                    pickdate: {$set: false},
+                  });
+                });
+              }} />
+            ) : (
+              this.state.buttons.map(([text, jump], i) => {
+                return <TouchableOpacity key={i} onPress={() => {
+                  if (jump === undefined) {
+                    this.setState((prevState) => {
+                      return update(prevState, {
+                        buttons: {$set: []},
+                        history: {$unshift: [['user', text]]},
+                      });
+                    })
+                  } else {
+                    this.setState((prevState) => {
+                      return update(prevState, {
+                        buttons: {$set: []},
+                        history: {$unshift: [['user', text]]},
+                        future: {$set: convo[jump]},
+                      });
+                    })
+                  }
+                }}>
+                  <View style={[styles.button, styles.submitButton]}>
+                    <Text style={styles.submitButtonText}>{text}</Text>
+                  </View>
+                </TouchableOpacity>;
+              })
+            )
+          }
+        </View>
+      </View>;
+    }
   }
 }
 
@@ -393,10 +397,12 @@ class PathPage extends Component {
         (() => {
           const paths = Progress.availablePaths(this.props.numCompleted);
           if (paths.length === 0) {
-            return <Text style={styles.path}>
-              You haven't unlocked any videos! Start chatting by hitting
-              the speech icon below.
-            </Text>
+            return <View style={styles.path}>
+              <Text>
+                You haven't unlocked any videos! Start chatting by hitting
+                the speech icon below.
+              </Text>
+            </View>
           } else {
             return paths.map(({path, cont}, i) => {
               const loadPath = () => {
