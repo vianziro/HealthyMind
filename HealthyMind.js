@@ -300,7 +300,7 @@ class ConversationPage extends Component {
               }
               if (React.Platform.OS === 'ios') {
                 PushNotificationIOS.scheduleLocalNotification({
-                  fireDate: date,
+                  fireDate: date.getTime(),
                   alertBody: 'Ready to change your mind?',
                 });
               }
