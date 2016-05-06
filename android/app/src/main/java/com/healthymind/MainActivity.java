@@ -1,7 +1,10 @@
 package com.healthymind;
 
 import com.facebook.react.ReactActivity;
-import ca.jaysoo.extradimensions.ExtraDimensionsPackage;
+import android.content.Intent;
+import android.content.res.Configuration;
+import com.github.yamill.orientation.OrientationPackage;
+import com.zmxv.RNSound.RNSoundPackage;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 
@@ -36,8 +39,16 @@ public class MainActivity extends ReactActivity {
     protected List<ReactPackage> getPackages() {
         return Arrays.<ReactPackage>asList(
             new MainReactPackage(),
-            new ExtraDimensionsPackage(this)
-            // MT: I had to add the "this" in above line, rnpm didn't put it there
+            new OrientationPackage(this),
+            new RNSoundPackage()
         );
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        Intent intent = new Intent("onConfigurationChanged");
+        intent.putExtra("newConfig", newConfig);
+        this.sendBroadcast(intent);
     }
 }

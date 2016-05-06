@@ -4,18 +4,20 @@ function getDialog(completedNum, completedTime) {
   const timePassed = (Date.now() - completedTime) > 6 * 60 * 60 * 1000;
   switch (completedNum) {
     case 0: return 'intro';
-    case 1: return 'practice1intro';
-    case 2: return timePassed ? lesson2 : 'notready';
+    case 1: return 'lesson1intro';
+    case 2: return 'practice1intro';
+    case 3: return 'practice1intro';
+    case 4: return timePassed ? 'lesson2intro' : 'notready';
+    case 5: return 'lesson2intro';
     default: return 'notready';
   }
 }
 
 function availablePaths(completedNum) {
   var paths = [];
-  if (completedNum >= 1) paths.push('lesson1');
-  if (completedNum >= 2) paths.push('practice1');
-  if (completedNum >= 3) paths.push('lesson2');
-  if (completedNum >= 4) paths.push('practice2');
+  if (completedNum >= 1) paths.push({path: 'lesson1'  , cont: completedNum < 2});
+  if (completedNum >= 3) paths.push({path: 'practice1', cont: completedNum < 4});
+  if (completedNum >= 5) paths.push({path: 'lesson2'  , cont: completedNum < 6});
   return paths;
 }
 

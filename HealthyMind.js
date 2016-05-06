@@ -17,13 +17,15 @@ import React, {
   Navigator,
   DatePickerIOS,
   TimePickerAndroid,
+  PushNotificationIOS,
 } from 'react-native';
 
 import {convo} from './conversation';
 import Progress from './progress';
 import update from 'react-addons-update';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
-import Dims from './Dims';
+import Sound from 'react-native-sound';
+import {StatusSpace} from './StatusSpace';
 
 class DialogLine extends Component {
   constructor(props) {
@@ -54,12 +56,86 @@ class DialogLine extends Component {
   }
 }
 
+class SoundPlayer extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      playing: false,
+      ended: false,
+      loaded: false,
+      bounceValue: new Animated.Value(0),
+    };
+    this.hasEnded = false;
+    this.hasLoaded = false;
+  }
+
+  componentDidMount() {
+    this.sound = new Sound(this.props.sound, Sound.MAIN_BUNDLE, (error, props) => {
+      if (error) throw error;
+      this.setState({loaded: true});
+      this.play();
+    });
+
+    this.state.bounceValue.setValue(0);
+    Animated.spring(
+      this.state.bounceValue,
+      {
+        toValue: 1,
+        friction: 10,
+      }
+    ).start();
+  }
+
+  componentWillUnmount() {
+    this.sound.stop();
+    this.sound.release();
+  }
+
+  play() {
+    this.sound.play(() => {
+      if (!this.state.ended) {
+        this.setState({ended: true});
+        this.props.onEnd();
+      }
+    });
+    this.setState({playing: true});
+  }
+
+  pause() {
+    this.sound.pause();
+    this.setState({playing: false});
+  }
+
+  render() {
+    var anim = {transform: [{scale: this.state.bounceValue}]};
+    return <Animated.View style={anim}>
+      {
+        (() => {
+          if (this.state.ended) {
+            return <Image source={require('./img/check.png')} style={styles.playPause} />;
+          } else if (!this.state.loaded) {
+            return <Image source={require('./img/dots.png')} style={styles.playPause} />;
+          } else if (this.state.playing) {
+            return <TouchableOpacity onPress={() => this.pause()}>
+              <Image source={require('./img/pause.png')} style={styles.playPause} />
+            </TouchableOpacity>;
+          } else {
+            return <TouchableOpacity onPress={() => this.play()}>
+              <Image source={require('./img/play.png')} style={styles.playPause} />
+            </TouchableOpacity>;
+          }
+        })()
+      }
+    </Animated.View>;
+  }
+}
+
 class MTTimePicker extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       date: new Date(),
-    }
+    };
   }
 
   render() {
@@ -98,12 +174,12 @@ class MTTimePicker extends Component {
 }
 
 class ConversationPage extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       history: [],
       buttons: [],
-      future: [],
+      future: props.initLines,
       pickdate: false,
     };
   }
@@ -111,9 +187,6 @@ class ConversationPage extends Component {
   componentDidMount() {
     this._isMounted = true;
     this._paused = false;
-    this.setState({
-      future: convo[this.props.initConversation],
-    });
   }
 
   componentWillUnmount() {
@@ -153,6 +226,7 @@ class ConversationPage extends Component {
     } else if (Array.isArray(nextThing)) {
       if (Array.isArray(nextThing[0])) {
         // buttons
+        this._paused = true;
         setTimeout(() => {
           if (this._isMounted) {
             this.setState((prevState) => {
@@ -162,22 +236,29 @@ class ConversationPage extends Component {
               });
             });
           }
+          this._paused = false;
         }, 1000);
+      } else if (nextThing[0] === '__PROGRESS__') {
+        // mark progress
+        this.props.onComplete(nextThing[1]);
+        this.setState((prevState) => {
+          return update(prevState, {
+            future: {$apply: (xs) => {return xs.slice(1);}},
+          });
+        });
       } else if (nextThing[0] === '__MEDIA__') {
-        // play media, mark progress
+        // play media
         this._paused = true;
         setTimeout(() => {
           if (this._isMounted) {
             this.setState((prevState) => {
               return update(prevState, {
-                history: {$unshift: [['app', `(play media ${nextThing[1]})`]]},
+                history: {$unshift: [['media', 'test.mp3']]},
                 future: {$apply: (xs) => {return xs.slice(1);}},
               });
             });
           }
-          this._paused = false;
         }, 1000);
-        this.props.onComplete(nextThing[1]);
       } else {
         // jump
         this.setState({
@@ -189,11 +270,22 @@ class ConversationPage extends Component {
 
   render() {
     setTimeout(() => {this.checkPop()}, 0);
-    return <View style={{height: Dims.getHeight() - Dims.barInAppHeight - 60 - 50}}>
+    return <View style={{flex: 1}}>
       <InvertibleScrollView inverted style={styles.conversation}>
         {
           this.state.history.map(([speaker, line], i) => {
-            return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
+            if (speaker === 'media') {
+              if (i === 0) {
+                return <SoundPlayer sound={line} onEnd={() => {
+                  this._paused = false;
+                  this.checkPop();
+                }} key={this.state.history.length - i} />;
+              } else {
+                return <Image source={require('./img/check.png')} style={styles.playPause} key={this.state.history.length - i} />;
+              }
+            } else {
+              return <DialogLine isUser={speaker === 'user'} text={line} key={this.state.history.length - i} />;
+            }
           })
         }
       </InvertibleScrollView>
@@ -201,11 +293,21 @@ class ConversationPage extends Component {
         {
           this.state.pickdate ? (
             <MTTimePicker onPick={({hour, minute}) => {
-              var minute_ = minute < 10 ? '0' + minute : '' + minute;
+              var now = new Date();
+              var date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
+              if (date < now) {
+                date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, hour, minute);
+              }
+              if (React.Platform.OS === 'ios') {
+                PushNotificationIOS.scheduleLocalNotification({
+                  fireDate: date,
+                  alertBody: 'Ready to change your mind?',
+                });
+              }
               this.setState((prevState) => {
                 return update(prevState, {
                   buttons: {$set: []},
-                  history: {$unshift: [['user', `${hour}:${minute_}`]]},
+                  history: {$unshift: [['user', date.toLocaleString()]]},
                   pickdate: {$set: false},
                 });
               });
@@ -243,8 +345,8 @@ class ConversationPage extends Component {
 }
 
 class MainFrame extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {};
   }
 
@@ -252,6 +354,7 @@ class MainFrame extends Component {
     return (
       <View style={styles.container}>
         <StatusBar />
+        <StatusSpace />
         <View style={styles.topbar}>
           <View style={styles.topside} />
           <Image style={styles.appname_image} source={require('./img/healthymind.png')} />
@@ -259,7 +362,9 @@ class MainFrame extends Component {
             <Image style={styles.menu_button} source={require('./img/menu.png')} />
           </TouchableOpacity>
         </View>
-        {this.props.children}
+        <View style={styles.maincontent}>
+          {this.props.children}
+        </View>
         <View style={styles.bottombar}>
           <TouchableOpacity onPress={this.props.onMountains}>
             <Image source={require('./img/mountains.png')} style={styles.bottombutton} />
@@ -277,8 +382,8 @@ class MainFrame extends Component {
 }
 
 class PathPage extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {};
   }
 
@@ -293,9 +398,12 @@ class PathPage extends Component {
               the speech icon below.
             </Text>
           } else {
-            return paths.map((path, i) => {
+            return paths.map(({path, cont}, i) => {
+              const loadPath = () => {
+                this.props.onChoose(cont ? convo[path] : convo[path].slice(0, 1));
+              };
               return (
-                <TouchableOpacity onPress={() => null} key={i}>
+                <TouchableOpacity onPress={loadPath} key={i}>
                   <View style={styles.path}>
                     <Text style={styles.pathTitle}>{ Progress.titles[path] }</Text>
                     <Text style={styles.pathDescription}>{ Progress.descriptions[path] }</Text>
@@ -310,9 +418,40 @@ class PathPage extends Component {
   }
 }
 
+const initialNotification = React.Platform.OS === 'ios' ? PushNotificationIOS.popInitialNotification() : null;
+
+class Notifications extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidMount() {
+    if (React.Platform.OS === 'ios') {
+      PushNotificationIOS.requestPermissions();
+      this.listener = () => {
+        if (this.props.onNotification) this.props.onNotification();
+      };
+      PushNotificationIOS.addEventListener('localNotification', this.listener);
+      if (initialNotification) {
+        this.listener();
+      }
+    }
+  }
+
+  componentWillUnmount() {
+    if (React.Platform.OS === 'ios') {
+      PushNotificationIOS.removeEventListener('localNotification', this.listener);
+    }
+  }
+
+  render() {
+    return null;
+  }
+}
+
 class HealthyMind extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       progress: 0,
       lastTime: Date.now(),
@@ -335,6 +474,13 @@ class HealthyMind extends Component {
     });
   }
 
+  goToChat(navigator) {
+    navigator.resetTo({
+      page: 'chat',
+      lines: convo[Progress.getDialog(this.state.progress, this.state.lastTime)],
+    });
+  }
+
   render() {
     return (
       <Navigator
@@ -343,18 +489,21 @@ class HealthyMind extends Component {
           switch (route.page) {
             case 'chat':
               return <MainFrame
-                onMountains={() => navigator.resetTo({page: 'path'})}
-                onCort={() => Progress.clearProgress(() => this.updateProgress())}>
+                onMountains={() => navigator.resetTo({page: 'path'})}>
                 <ConversationPage
-                  initConversation={Progress.getDialog(this.state.progress, this.state.lastTime)}
+                  initLines={route.lines}
                   onComplete={(n) => this.completeMedia(n)}
                 />
+                <Notifications onNotification={() => this.goToChat(navigator)} />
               </MainFrame>;
             case 'path':
               return <MainFrame
-                onChat={() => navigator.resetTo({page: 'chat'})}
+                onChat={() => this.goToChat(navigator)}
                 onCort={() => Progress.clearProgress(() => this.updateProgress())}>
-                <PathPage numCompleted={this.state.progress} />
+                <PathPage numCompleted={this.state.progress} onChoose={(lines) => {
+                  navigator.resetTo({page: 'chat', lines: lines});
+                }} />
+                <Notifications onNotification={() => this.goToChat(navigator)} />
               </MainFrame>;
           }
         }}
@@ -383,19 +532,26 @@ const styles = StyleSheet.create({
 
   topbar: {
     padding: 15,
-    paddingTop: 15 + Dims.barInAppHeight,
+    paddingTop: 15,
     backgroundColor: 'white',
     alignSelf: 'stretch',
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
-    height: 60 + Dims.barInAppHeight,
+    height: 60,
+    flex: 0,
+  },
+  maincontent: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   conversation: {
     margin: 20,
+    flex: 1,
   },
   controls: {
     margin: 20,
+    flex: 0,
   },
   bottombar: {
     padding: 10,
@@ -405,6 +561,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 50,
+    flex: 0,
   },
 
   topside: {
@@ -426,6 +583,7 @@ const styles = StyleSheet.create({
   },
   appname_image: {
     height: 18,
+    width: 18 * (256/28),
     resizeMode: 'contain',
   },
   appsays: {
@@ -490,6 +648,14 @@ const styles = StyleSheet.create({
   },
   pathDescription: {
   },
+
+  playPause: {
+    width: 90,
+    height: 90,
+    resizeMode: 'contain',
+    marginBottom: 10,
+    alignSelf: 'center',
+  }
 });
 
 exports.HealthyMind = HealthyMind;
